@@ -1,3 +1,4 @@
+
 from django.db import models
 
 
@@ -49,10 +50,14 @@ class Question(models.Model):
         on_delete=models.CASCADE,
         related_name="questions"
     )
-    text = models.TextField()
+    question_text = models.TextField()
+    grade = models.IntegerField(default=1)
 
     def __str__(self):
-        return self.text
+        return self.question_text
+
+    def is_get_score(self, selected_choice):
+        return selected_choice.is_correct
 
 
 class Choice(models.Model):
@@ -61,21 +66,42 @@ class Choice(models.Model):
         on_delete=models.CASCADE,
         related_name="choices"
     )
-    text = models.CharField(max_length=200)
+    choice_text = models.CharField(max_length=200)
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text
+        return self.choice_text
 
 
 class Submission(models.Model):
-    course = models.ForeignKey(
-        Course,
-        on_delete=models.CASCADE
+    enrollment = models.ForeignKey(
+        "Enrollment",
+        on_delete=models.CASCADE,
+        related_name="submissions"
     )
-    score = models.IntegerField(default=0)
-    total_questions = models.IntegerField(default=0)
+    choices = models.ManyToManyField(
+        Choice,
+        related_name="submissions",
+        blank=True
+    )
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.course.name} - {self.score}/{self.total_questions}"
+        return f"Submission {self.id} - {self.enrollment}"
+
+
+class Enrollment(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+    learner = models.ForeignKey(
+        Learner,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.learner.name} - {self.course.name}"
