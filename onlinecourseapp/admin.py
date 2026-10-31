@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 
 from .models import (
@@ -28,7 +29,7 @@ class LessonInline(admin.StackedInline):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ("text", "course")
+    list_display = ("question_text", "grade", "course")
     inlines = [ChoiceInline]
 
 
@@ -53,5 +54,11 @@ class LearnerAdmin(admin.ModelAdmin):
     list_display = ("name", "email")
 
 
-admin.site.register(Choice)
-admin.site.register(Submission)
+@admin.register(Choice)
+class ChoiceAdmin(admin.ModelAdmin):
+    list_display = ("choice_text", "question", "is_correct")
+
+
+@admin.register(Submission)
+class SubmissionAdmin(admin.ModelAdmin):
+    list_display = ("id", "enrollment", "submitted_at")
