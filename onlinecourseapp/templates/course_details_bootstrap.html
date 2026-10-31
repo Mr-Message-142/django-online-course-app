@@ -1,75 +1,84 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+    <title>{{ course.name }} | OnlineCourse</title>
 
-    <title>{{ course.name }}</title>
-
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap 5 CSS -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet">
 </head>
 
-<body>
+<body class="bg-light">
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand fw-bold" href="#">
                 OnlineCourse
             </a>
         </div>
     </nav>
 
+    <main class="container py-5">
 
-    <!-- Course Details -->
-    <div class="container mt-5">
+        <!-- Course Information -->
+        <div class="card border-0 shadow mb-5">
+            <div class="card-body p-4 p-md-5">
 
-        <div class="card shadow">
+                <span class="badge bg-primary mb-3">
+                    Online Course
+                </span>
 
-            <div class="card-body">
-
-                <h1 class="card-title">
+                <h1 class="card-title fw-bold mb-3">
                     {{ course.name }}
                 </h1>
 
-                <p class="card-text">
+                <p class="card-text text-muted fs-5">
                     {{ course.description }}
                 </p>
 
             </div>
-
         </div>
 
+        <!-- Course Lessons -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Course Lessons</h2>
 
-        <!-- Lessons -->
-        <h2 class="mt-5 mb-4">
-            Course Lessons
-        </h2>
+            <span class="badge bg-secondary">
+                {{ course.lessons.count }} Lessons
+            </span>
+        </div>
 
-        <div class="row">
+        <div class="row g-4">
 
             {% for lesson in course.lessons.all %}
 
-                <div class="col-md-6 mb-4">
+                <div class="col-12 col-md-6">
 
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 border-0 shadow-sm">
 
-                        <div class="card-body">
+                        <div class="card-body p-4">
 
-                            <h5 class="card-title">
+                            <h5 class="card-title fw-bold text-primary">
                                 {{ lesson.title }}
                             </h5>
 
-                            <p class="card-text">
+                            <p class="card-text text-muted">
                                 {{ lesson.content }}
                             </p>
 
+                        </div>
+
+                        <div class="card-footer bg-white border-0">
+                            <small class="text-muted">
+                                Lesson {{ forloop.counter }}
+                            </small>
                         </div>
 
                     </div>
@@ -78,30 +87,27 @@
 
             {% empty %}
 
-                <div class="alert alert-warning">
-                    No lessons available for this course.
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        No lessons available for this course.
+                    </div>
                 </div>
 
             {% endfor %}
 
         </div>
 
-
         <!-- Mock Exam Button -->
-        <div class="text-center mt-4 mb-5">
+        <div class="text-center mt-5 mb-4">
 
-            <a
-                href="{% url 'submit' course.id %}"
-                class="btn btn-primary btn-lg">
-
+            <a href="{% url 'submit' course.id %}"
+               class="btn btn-primary btn-lg px-5 shadow-sm">
                 Start Mock Exam
-
             </a>
 
         </div>
 
-    </div>
-
+    </main>
 
     <!-- Bootstrap JavaScript -->
     <script
@@ -109,5 +115,4 @@
     </script>
 
 </body>
-
 </html>
