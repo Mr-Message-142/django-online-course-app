@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.urls import path
 
@@ -23,7 +24,7 @@ urlpatterns = [
     ),
 
     path(
-        "course/<int:course_id>/result/",
+        "course/<int:course_id>/submission/<int:submission_id>/result/",
         views.show_exam_result,
         name="show_exam_result"
     ),
