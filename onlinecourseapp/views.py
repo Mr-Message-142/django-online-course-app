@@ -1,6 +1,8 @@
-from django.shortcuts import render, get_object_or_404
 
-from .models import Course, Submission
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+
+from .models import Course, Enrollment, Submission, Choice
 
 
 def course_details(request, course_id):
@@ -9,9 +11,7 @@ def course_details(request, course_id):
     return render(
         request,
         "course_details_bootstrap.html",
-        {
-            "course": course
-        }
+        {"course": course}
     )
 
 
@@ -20,48 +20,64 @@ def submit(request, course_id):
 
     questions = course.questions.all()
 
-    score = 0
-    total_questions = questions.count()
-
     if request.method == "POST":
 
-        for question in questions:
+        # Get the learner ID stored in the session.
+        learner_id = request.session.get("learner_id")
 
-            selected_choice = request.POST.get(
+        if not learner_id:
+            return render(
+                request,
+                "mock_exam.html",
+                {
+                    "course": course,
+                    "questions": questions,
+                    "error": "Please log in or select a learner before submitting."
+                }
+            )
+
+        # Retrieve the learner's enrollment in this course.
+        enrollment = get_object_or_404(
+            Enrollment,
+            course=course,
+            learner_id=learner_id
+        )
+
+        # Create a submission linked to the enrollment.
+        submission = Submission.objects.create(
+            enrollment=enrollment
+        )
+
+        selected_ids = []
+
+        # Save the selected choices.
+        for question in questions:
+            selected_choice_id = request.POST.get(
                 f"question_{question.id}"
             )
 
-            if selected_choice:
-
+            if selected_choice_id:
                 try:
-                    choice_id = int(selected_choice)
+                    selected_choice = Choice.objects.get(
+                        id=int(selected_choice_id),
+                        question=question
+                    )
 
-                    correct = question.choices.filter(
-                        id=choice_id,
-                        is_correct=True
-                    ).exists()
+                    submission.choices.add(selected_choice)
+                    selected_ids.append(selected_choice.id)
 
-                    if correct:
-                        score += 1
+                except (Choice.DoesNotExist, ValueError):
+                    continue
 
-                except ValueError:
-                    pass
-
-        submission = Submission.objects.create(
-            course=course,
-            score=score,
-            total_questions=total_questions
-        )
-
-        return render(
-            request,
-            "exam_result.html",
-            {
-                "course": course,
-                "score": score,
-                "total_questions": total_questions,
-                "submission": submission
-            }
+        # Redirect to the exam result page.
+        return redirect(
+            reverse(
+                "show_exam_result",
+                kwargs={
+                    "course_id": course.id,
+                    "submission_id": submission.id
+                }
+            )
         )
 
     return render(
@@ -74,24 +90,38 @@ def submit(request, course_id):
     )
 
 
-def show_exam_result(request, course_id):
+def show_exam_result(request, course_id, submission_id):
     course = get_object_or_404(Course, id=course_id)
 
-    submission = Submission.objects.filter(
-        course=course
-    ).order_by("-submitted_at").first()
+    submission = get_object_or_404(
+        Submission,
+        id=submission_id,
+        enrollment__course=course
+    )
+
+    selected_ids = list(
+        submission.choices.values_list("id", flat=True)
+    )
+
+    # Calculate the grade using the saved selected choices.
+    grade = 0
+
+    for question in course.questions.all():
+        selected_choice = submission.choices.filter(
+            question=question,
+            is_correct=True
+        ).first()
+
+        if selected_choice:
+            grade += question.grade
 
     return render(
         request,
-        "exam_result.html",
+        "exam_result_bootstrap.html",
         {
             "course": course,
-            "submission": submission,
-            "score": submission.score if submission else 0,
-            "total_questions": (
-                submission.total_questions
-                if submission
-                else course.questions.count()
-            )
+            "selected_ids": selected_ids,
+            "grade": grade,
+            "submission": submission
         }
     )
